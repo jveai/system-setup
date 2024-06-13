@@ -1,0 +1,19 @@
+---
+- name: Configure Ubuntu laptop to stay on when the lid is closed
+  hosts: localhost
+  become: true
+
+  tasks:
+    - name: Backup current logind.conf
+      copy:
+        src: /etc/systemd/logind.conf
+        dest: /etc/systemd/logind.conf.bak
+        remote_src: yes
+        force: yes
+
+    - name: Configure systemd to ignore lid close events
+      lineinfile:
+        path: /etc/systemd/logind.conf
+        regexp: '^#?HandleLidSwitch='
+        line: 'HandleLidSwitch=ignore'
+        state: present

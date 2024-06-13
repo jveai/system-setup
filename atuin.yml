@@ -1,0 +1,88 @@
+---
+- name: Install Atuin and log in
+  hosts: localhost
+  vars_prompt:
+    - name: "atuin_username"
+      prompt: "Enter your Atuin username"
+      private: no
+    - name: "atuin_email"
+      prompt: "Enter your Atuin email"
+      private: no
+    - name: "atuin_password"
+      prompt: "Enter your Atuin password"
+      private: yes
+
+  tasks:
+    - name: Update apt cache
+      become: yes
+      apt:
+        update_cache: yes
+
+    - name: Install prerequisites
+      become: yes
+      apt:
+        name:
+          - curl
+          - gnupg
+        state: present
+
+    - name: Create directory for Atuin installation script
+      file:
+        path: "{{ ansible_env.HOME }}/atuin_setup"
+        state: directory
+        mode: '0755'
+
+    - name: Download Atuin installation script
+      get_url:
+        url: https://setup.atuin.sh
+        dest: "{{ ansible_env.HOME }}/atuin_setup/setup_atuin.sh"
+        mode: '0755'
+
+    - name: Run Atuin installation script
+      shell: /bin/bash {{ ansible_env.HOME }}/atuin_setup/setup_atuin.sh
+      args:
+        executable: /bin/bash
+      register: install_output
+      ignore_errors: yes
+
+    - name: Debug installation output
+      debug:
+        var: install_output
+
+    - name: Add Atuin to PATH in .bashrc
+      lineinfile:
+        path: "{{ ansible_env.HOME }}/.bashrc"
+        regexp: 'export PATH=.*:{{ ansible_env.HOME }}/.cargo/bin'
+        line: 'export PATH="{{ ansible_env.HOME }}/.cargo/bin:$PATH"'
+        create: yes
+
+    - name: Source .bashrc to update PATH for the current session
+      shell: . {{ ansible_env.HOME }}/.bashrc
+      args:
+        executable: /bin/bash
+
+    - name: Verify Atuin installation
+      command: atuin --version
+      register: atuin_version
+      failed_when: atuin_version.rc != 0
+      ignore_errors: yes
+
+    - name: Debug Atuin version
+      debug:
+        var: atuin_version
+
+    - name: Register and log in to Atuin
+      expect:
+        command: atuin register -u {{ atuin_username }} -e {{ atuin_email }}
+        responses:
+          'Password:': "{{ atuin_password }}"
+
+      when: atuin_version.rc == 0
+
+    - name: Import existing shell history
+      command: atuin import auto
+      when: atuin_version.rc == 0
+
+    - name: Sync Atuin history
+      command: atuin sync
+      when: atuin_version.rc == 0

@@ -1,0 +1,4 @@
+---
+
+- name: Configure Ubuntu laptop to stay on when the lid is closed
+  include_tasks: keep_lid_open.yml

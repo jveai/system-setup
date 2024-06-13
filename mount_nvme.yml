@@ -1,0 +1,44 @@
+---
+- name: Ensure nvme0n1 is mounted to /home/<user>/data
+  hosts: localhost
+
+  vars:
+    device: /dev/nvme0n1
+    fstype: ext4  # Change this to your actual filesystem type
+    options: defaults  # Additional mount options if needed
+
+  tasks:
+    - name: Get the current username
+      ansible.builtin.command: whoami
+      register: current_user
+
+    - name: Set mount point based on current user
+      set_fact:
+        mount_point: "/home/{{ current_user.stdout }}/data"
+
+    - name: Ensure the mount point directory exists
+      file:
+        path: "{{ mount_point }}"
+        state: directory
+        owner: "{{ current_user.stdout }}"
+        group: "{{ current_user.stdout }}"
+        mode: '0755'
+      become: yes
+
+    - name: Mount the device
+      mount:
+        path: "{{ mount_point }}"
+        src: "{{ device }}"
+        fstype: "{{ fstype }}"
+        opts: "{{ options }}"
+        state: mounted
+      become: yes
+
+    - name: Ensure fstab entry is present
+      mount:
+        path: "{{ mount_point }}"
+        src: "{{ device }}"
+        fstype: "{{ fstype }}"
+        opts: "{{ options }}"
+        state: present
+      become: yes

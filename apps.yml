@@ -1,0 +1,19 @@
+---
+- name: Install terminator
+  hosts: localhost
+
+  vars:
+    email: "jve@skytem.com"
+    gh_name: "Jonas Vennevold"
+  tasks:
+    - name: Install terminator
+      apt:
+        name: 
+          - terminator
+          - git
+        state: present
+        update_cache: yes
+      become: true
+
+    - name: Set git username and email
+      shell: git config --global user.name "{{ gh_name }}" && git config --global user.email "{{ email }}"
