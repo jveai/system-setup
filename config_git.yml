@@ -1,0 +1,67 @@
+---
+- name: Generate SSH key for GitHub, prompt for adding to GitHub, and verify
+  hosts: localhost
+  tasks:
+    - name: Ensure SSH key directory exists
+      file:
+        path: "~/.ssh"
+        state: directory
+        mode: '0700'
+
+    - name: Check if SSH key already exists
+      stat:
+        path: "~/.ssh/github_id_rsa"
+      register: ssh_key
+
+    - name: Generate SSH key for GitHub
+      command: ssh-keygen -t rsa -b 4096 -f ~/.ssh/github_id_rsa -N ''
+      when: not ssh_key.stat.exists
+
+    - name: Read the public key
+      slurp:
+        src: "~/.ssh/github_id_rsa.pub"
+      register: pub_key
+
+    - name: Display the public key
+      debug:
+        msg: "{{ pub_key.content | b64decode }}"
+
+    - name: Pause for user to add the SSH key to GitHub
+      pause:
+        prompt: "Please add the above SSH public key to your GitHub account (https://github.com/settings/keys) and press ENTER to continue."
+
+    - name: Ensure SSH config file exists
+      file:
+        path: "~/.ssh/config"
+        state: touch
+        mode: '0600'
+
+    - name: Add GitHub to SSH config
+      lineinfile:
+        path: "~/.ssh/config"
+        line: |
+          Host github.com
+            HostName github.com
+            User git
+            IdentityFile ~/.ssh/github_id_rsa
+            IdentitiesOnly yes
+        create: yes
+
+    - name: Test SSH connection to GitHub
+      command: ssh -T git@github.com
+      register: ssh_test
+      ignore_errors: yes
+
+    - name: Display SSH connection test result
+      debug:
+        msg: "{{ ssh_test.stderr }}"
+
+    - name: Fail if SSH connection to GitHub failed
+      fail:
+        msg: "SSH key was not added to GitHub successfully."
+      when: "'Hi' not in ssh_test.stderr"
+    
+    - name: Success message if SSH connection to GitHub succeeded
+      debug:
+        msg: "SSH key was successfully added to GitHub and authenticated."
+      when: "'Hi' in ssh_test.stderr"
