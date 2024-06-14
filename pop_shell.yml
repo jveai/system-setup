@@ -1,0 +1,42 @@
+---
+- name: Install Pop Shell on GNOME
+  hosts: localhost
+  become: false
+
+  vars:
+    tmp_dir: "{{ lookup('env', 'HOME') }}/tmp/pop-shell"
+
+  tasks:
+    - name: Install Node.js and npm
+      become: yes
+      apt:
+        name:
+          - nodejs
+          - npm
+        state: present
+
+    - name: Install TypeScript using npm
+      npm:
+        name: typescript
+        global: yes
+
+    - name: Install GNU Make
+      become: yes
+      apt:
+        name: make
+        state: present
+
+    - name: Create temporary directory
+      file:
+        path: "{{ tmp_dir }}"
+        state: directory
+
+    - name: Clone Pop Shell repository
+      git:
+        repo: 'https://github.com/pop-os/shell.git'
+        dest: "{{ tmp_dir }}"
+
+    - name: Run local installation
+      make:
+        chdir: "{{ tmp_dir }}"
+        target: local-install
