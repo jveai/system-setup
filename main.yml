@@ -1,4 +1,25 @@
 ---
 
-- name: Configure Ubuntu laptop to stay on when the lid is closed
-  include_tasks: keep_lid_open.yml
+- name: Customize ubuntu
+  import_playbook: ubuntu_config.yml
+
+- name: Install apps
+  import_playbook: apps.yml
+
+- name: Configure git
+  import_playbook: config_git.yml
+
+- name: Install Atuin
+  import_playbook: atuin.yml
+
+- name: Mount extra nvme drive
+  import_playbook: mount_nvme.yml
+
+- name: Install just
+  import_playbook: just.yml
+
+- name: Install Google Chrome
+  import_playbook: google_chrome.yml
+
+- name: Install Docker
+  import_playbook: docker.yml

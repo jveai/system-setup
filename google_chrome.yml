@@ -1,0 +1,35 @@
+---
+- name: Install Google Chrome on Ubuntu
+  hosts: localhost
+  become: yes
+
+  tasks:
+    - name: Download Google Chrome signing key
+      get_url:
+        url: https://dl.google.com/linux/linux_signing_key.pub
+        dest: /tmp/linux_signing_key.pub
+
+    - name: Add the Google Chrome signing key to apt
+      command: gpg --dearmor /tmp/linux_signing_key.pub
+      args:
+        creates: /etc/apt/trusted.gpg.d/google.gpg
+
+    - name: Move the Google Chrome signing key to the trusted key directory
+      copy:
+        src: /tmp/linux_signing_key.pub.gpg
+        dest: /etc/apt/trusted.gpg.d/google.gpg
+        remote_src: yes
+
+    - name: Add Google Chrome repository
+      apt_repository:
+        repo: "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main"
+        state: present
+
+    - name: Update apt package list
+      apt:
+        update_cache: yes
+
+    - name: Install Google Chrome
+      apt:
+        name: google-chrome-stable
+        state: present

@@ -14,7 +14,7 @@
 
     - name: Set mount point based on current user
       set_fact:
-        mount_point: "/home/{{ current_user.stdout }}/data"
+        mount_point: "/home/{{ current_user.stdout }}/work"
 
     - name: Ensure the mount point directory exists
       file:

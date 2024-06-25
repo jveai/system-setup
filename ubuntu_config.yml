@@ -17,3 +17,7 @@
         regexp: '^#?HandleLidSwitch='
         line: 'HandleLidSwitch=ignore'
         state: present
+    
+    # https://askubuntu.com/questions/1181799/how-do-i-hide-the-icon-for-a-mounted-volume-from-the-dock-on-ubuntu-19-10-and-la
+    - name: Don't show mount options in dock
+      shell: gsettings set org.gnome.shell.extensions.dash-to-dock show-mounts false

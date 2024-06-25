@@ -1,0 +1,56 @@
+---
+- name: Install Just on Ubuntu using Cargo
+  hosts: localhost
+  vars:
+    cargo_home: "{{ ansible_env.HOME }}/.cargo"
+    rustup_home: "{{ ansible_env.HOME }}/.rustup"
+
+  tasks:
+    - name: Install dependencies
+      become: yes
+      apt:
+        name: 
+          - curl
+          - build-essential
+          - libssl-dev
+          - pkg-config
+        state: present
+        update_cache: yes
+
+    - name: Install Rust and Cargo
+      shell: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      args:
+        creates: "{{ cargo_home }}/bin/rustup"
+      environment:
+        CARGO_HOME: "{{ cargo_home }}"
+        RUSTUP_HOME: "{{ rustup_home }}"
+
+    - name: Ensure Cargo bin path is in the environment
+      lineinfile:
+        path: "{{ ansible_env.HOME }}/.bashrc"
+        line: 'export PATH=$PATH:{{ cargo_home }}/bin'
+        state: present
+
+    - name: Source .bashrc to update PATH for the current session
+      shell: source {{ ansible_env.HOME }}/.bashrc
+      args:
+        executable: /bin/bash
+
+    - name: Install Just using Cargo
+      shell: "{{ cargo_home }}/bin/cargo install just"
+      environment:
+        CARGO_HOME: "{{ cargo_home }}"
+        RUSTUP_HOME: "{{ rustup_home }}"
+
+    - name: Ensure Just binary is accessible
+      become: yes
+      file:
+        src: "{{ cargo_home }}/bin/just"
+        dest: /usr/local/bin/just
+        state: link
+
+    - name: Verify Just installation
+      command: just --version
+      register: result
+      failed_when: "'just' not in result.stdout"
+      changed_when: false

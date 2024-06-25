@@ -1,7 +1,15 @@
 ---
 - name: Generate SSH key for GitHub, prompt for adding to GitHub, and verify
   hosts: localhost
+
+  vars:
+    email: "jve@skytem.com"
+    gh_name: "Jonas Vennevold"
+
   tasks:
+    - name: Set git username and email
+      shell: git config --global user.name "{{ gh_name }}" && git config --global user.email "{{ email }}"
+
     - name: Ensure SSH key directory exists
       file:
         path: "~/.ssh"

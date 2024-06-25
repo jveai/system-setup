@@ -2,9 +2,6 @@
 - name: Install terminator
   hosts: localhost
 
-  vars:
-    email: "jve@skytem.com"
-    gh_name: "Jonas Vennevold"
   tasks:
     - name: Install terminator
       apt:
@@ -14,11 +11,14 @@
         state: present
         update_cache: yes
       become: true
+    
+    - name: Snap install slack
+      snap:
+        name: 
+        - slack
+        - spotify
+        state: present
+      become: true
 
-    - name: Set git username and email
-      shell: git config --global user.name "{{ gh_name }}" && git config --global user.email "{{ email }}"
-
-    # https://askubuntu.com/questions/1181799/how-do-i-hide-the-icon-for-a-mounted-volume-from-the-dock-on-ubuntu-19-10-and-la
-    - name: Don't show mount options in dock
-      shell: gsettings set org.gnome.shell.extensions.dash-to-dock show-mounts false
+    
 
