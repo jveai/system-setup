@@ -20,3 +20,5 @@ Manual steps:
 * Login into slack (jve@skytem.com)
 * Login into chrome (jve@airborneinstruments.dk)
 * Login into Atuin ???
+* Run ```gsettings set org.gnome.shell.extensions.dash-to-dock show-mounts false```
+* Disable Blank screen in Setings -> Power
