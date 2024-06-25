@@ -8,6 +8,7 @@
         name: 
           - terminator
           - git
+          - hdf5-tools
         state: present
         update_cache: yes
       become: true
