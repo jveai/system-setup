@@ -8,6 +8,18 @@
         name: 
           - terminator
           - git
+          - python3-pip
+
+
+
+
+
+
+
+
+
+
+
           - hdf5-tools
         state: present
         update_cache: yes
