@@ -1,0 +1,93 @@
+---
+- name: Install Oh My Zsh
+  hosts: localhost
+  
+  vars:
+    user: jve
+    oh_my_zsh_plugins:
+      - git
+      - docker
+      - kubectl
+      - history
+      - sudo
+    oh_my_zsh_theme: "robbyrussell"
+
+  tasks:
+    - name: Install required packages
+      package:
+        name:
+          - zsh 
+          - git
+          - curl
+        state: present
+      become: true
+
+    - name: Change user shell to zsh
+      user:
+        name: "{{ user }}"
+        shell: /bin/zsh
+      become: true
+
+    - name: Check if Oh My Zsh is installed
+      stat:
+        path: "/home/{{ user }}/.oh-my-zsh"
+      register: oh_my_zsh_installed
+      become: true
+
+    - name: Download Oh My Zsh installer
+      get_url:
+        url: https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+        dest: /tmp/install_oh_my_zsh.sh
+        mode: '0755'
+      when: not oh_my_zsh_installed.stat.exists
+      become: true
+
+    - name: Install Oh My Zsh
+      shell: /tmp/install_oh_my_zsh.sh --unattended
+      become_user: "{{ user }}"
+      when: not oh_my_zsh_installed.stat.exists
+      become: true
+
+    - name: Configure Oh My Zsh theme
+      lineinfile:
+        path: "/home/{{ user }}/.zshrc"
+        regexp: '^ZSH_THEME='
+        line: 'ZSH_THEME="{{ oh_my_zsh_theme }}"'
+      become_user: "{{ user }}"
+
+    - name: Configure Oh My Zsh plugins
+      lineinfile:
+        path: "/home/{{ user }}/.zshrc"
+        regexp: '^plugins='
+        line: 'plugins=({{ oh_my_zsh_plugins | join(" ") }})'
+      become_user: "{{ user }}"
+
+    - name: Clean up installer
+      file:
+        path: /tmp/install_oh_my_zsh.sh
+        state: absent
+      when: not oh_my_zsh_installed.stat.exists
+      become: true
+    
+    - name: Check if the specific block exists in .zshrc
+      ansible.builtin.command: |
+        awk '/if \[ -n "\$ZSH_VERSION" \]; then/,/fi/' ~/.zshrc
+      register: check_block
+      ignore_errors: yes
+    
+    - name: Add just completion to .zshrc
+      ansible.builtin.blockinfile:
+        path: "~/.zshrc"
+        create: yes
+        marker: "# {mark} JUST COMPLETION CONFIGURATION"
+        block: |
+          if [ -n "$ZSH_VERSION" ]; then
+            eval "$(just --completions zsh)"
+          fi
+      when: check_block.rc == 0
+
+    - name: Source .zshrc
+      shell: source ~/.zshrc
+      args:
+        executable: /bin/zsh
+      changed_when: false

@@ -1,26 +1,16 @@
 ---
-- name: Install terminator
+- name: Install apps
   hosts: localhost
 
   tasks:
-    - name: Install terminator
+    - name: Install apt packages
       apt:
         name: 
           - terminator
           - git
           - python3-pip
-
-
-
-
-
-
-
-
-
-
-
           - hdf5-tools
+          - zsh
         state: present
         update_cache: yes
       become: true
